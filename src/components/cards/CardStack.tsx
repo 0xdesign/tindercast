@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
 import Card from './Card';
 
 interface Profile {
@@ -15,6 +14,15 @@ interface Profile {
   connectedAddresses?: string[];
 }
 
+interface WalletOverlapData {
+  overlapPercentage: number;
+  topCommonAssets: {
+    symbol: string;
+    name: string;
+    logo?: string;
+  }[];
+}
+
 interface CardStackProps {
   profiles: Profile[];
 }
@@ -22,53 +30,51 @@ interface CardStackProps {
 export default function CardStack({ profiles }: CardStackProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState<'left' | 'right' | null>(null);
-  const [walletData, setWalletData] = useState<Record<number, any>>({});
-  const [loading, setLoading] = useState<Record<number, boolean>>({});
   const [exiting, setExiting] = useState(false);
+  const [walletData, setWalletData] = useState<Record<number, WalletOverlapData>>({});
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch wallet overlap data for the visible profiles
+  // Fetch wallet data for each profile
   useEffect(() => {
-    const visibleProfiles = profiles.slice(currentIndex, currentIndex + 3);
-    
-    visibleProfiles.forEach(profile => {
-      if (!walletData[profile.fid] && !loading[profile.fid]) {
-        fetchWalletOverlap(profile.fid);
-      }
-    });
-  }, [profiles, currentIndex, walletData, loading]);
+    const fetchWalletData = async () => {
+      setIsLoading(true);
+      
+      // Get the current user FID
+      const storedUser = localStorage.getItem('farcasterUser');
+      if (!storedUser) return;
 
-  const fetchWalletOverlap = async (profileFid: number) => {
-    try {
-      setLoading(prev => ({ ...prev, [profileFid]: true }));
+      const { fid } = JSON.parse(storedUser);
+      const walletResults: Record<number, WalletOverlapData> = {};
       
-      // Get current user from localStorage
-      const userData = JSON.parse(localStorage.getItem('farcasterUser') || '{}');
-      
-      if (!userData.fid) return;
-      
-      const response = await fetch('/api/wallet-overlap', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          userFid: userData.fid,
-          profileFid
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch wallet overlap');
+      // Fetch wallet data for each profile
+      for (const profile of profiles) {
+        try {
+          const response = await fetch('/api/wallet-overlap', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userFid: fid,
+              targetFid: profile.fid
+            }),
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            walletResults[profile.fid] = data;
+          }
+        } catch (error) {
+          console.error(`Error fetching wallet data for ${profile.username}:`, error);
+        }
       }
       
-      const data = await response.json();
-      setWalletData(prev => ({ ...prev, [profileFid]: data }));
-    } catch (error) {
-      console.error('Error fetching wallet overlap:', error);
-    } finally {
-      setLoading(prev => ({ ...prev, [profileFid]: false }));
-    }
-  };
+      setWalletData(walletResults);
+      setIsLoading(false);
+    };
+    
+    fetchWalletData();
+  }, [profiles]);
 
   const handleSwipe = (dir: 'left' | 'right') => {
     if (exiting) return;
@@ -89,7 +95,7 @@ export default function CardStack({ profiles }: CardStackProps) {
       <div className="flex h-[500px] w-full items-center justify-center rounded-xl border border-gray-200 bg-white p-6 text-center shadow-lg">
         <div>
           <h3 className="text-xl font-semibold text-gray-800">No more profiles</h3>
-          <p className="mt-2 text-gray-500">You've gone through all available profiles</p>
+          <p className="mt-2 text-gray-500">You&apos;ve gone through all available profiles</p>
           <button
             onClick={() => setCurrentIndex(0)}
             className="mt-6 rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
@@ -103,53 +109,40 @@ export default function CardStack({ profiles }: CardStackProps) {
 
   const currentProfile = profiles[currentIndex];
   const overlap = walletData[currentProfile.fid];
-  const commonTokens = overlap?.topCommonAssets.map((asset: any) => asset.symbol) || [];
+  const commonTokens = overlap?.topCommonAssets.map((asset) => asset.symbol) || [];
 
   return (
     <div className="relative h-[500px] w-full">
-      {/* Background cards (stacked appearance) */}
-      {profiles.slice(currentIndex + 1, currentIndex + 3).map((profile, idx) => {
-        const index = idx + 1; // Start from 1 since currentIndex is 0
-        
-        return (
-          <div
-            key={profile.fid}
-            className="absolute left-1/2 top-0 -translate-x-1/2"
-            style={{
-              zIndex: -index,
-              transform: `translateX(-50%) translateY(${index * 15}px) scale(${1 - index * 0.05})`,
-              opacity: 1 - index * 0.2
+      {isLoading ? (
+        <div className="flex h-full w-full items-center justify-center">
+          <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-blue-500"></div>
+        </div>
+      ) : (
+        <AnimatePresence>
+          <motion.div
+            key={currentIndex}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ 
+              x: direction === 'left' ? -300 : direction === 'right' ? 300 : 0,
+              opacity: 0,
+              transition: { duration: 0.3 }
             }}
+            className="h-full w-full"
           >
-            <div className="w-[350px] h-[500px] rounded-2xl border border-gray-200 bg-gray-100 shadow-md"></div>
-          </div>
-        );
-      })}
-
-      {/* Current card with swipe animation */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentProfile.fid}
-          className="absolute left-1/2 top-0 -translate-x-1/2"
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1, x: 0, rotate: 0 }}
-          exit={direction === 'left' 
-            ? { x: -500, rotate: -20, opacity: 0 }
-            : { x: 500, rotate: 20, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-        >
-          <Card
-            image={currentProfile.imageUrl}
-            name={currentProfile.displayName || currentProfile.username}
-            overlapPercentage={overlap?.overlapPercentage}
-            commonTokens={commonTokens}
-            onLike={() => handleSwipe('right')}
-            onDislike={() => handleSwipe('left')}
-          >
-            <p className="text-sm text-gray-600">{currentProfile.description}</p>
-          </Card>
-        </motion.div>
-      </AnimatePresence>
+            <Card
+              image={currentProfile.imageUrl}
+              name={currentProfile.displayName || currentProfile.username}
+              overlapPercentage={overlap?.overlapPercentage}
+              commonTokens={commonTokens}
+              onLike={() => handleSwipe('right')}
+              onDislike={() => handleSwipe('left')}
+            >
+              <p className="text-sm text-gray-600">{currentProfile.description}</p>
+            </Card>
+          </motion.div>
+        </AnimatePresence>
+      )}
     </div>
   );
 } 

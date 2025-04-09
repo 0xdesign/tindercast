@@ -24,8 +24,9 @@ export default function Home() {
             window.location.href = '/login';
           }
         }, 300);
-      } catch (e) {
+      } catch (error) {
         // In case of any error, default to login page
+        console.error("Error checking authentication:", error);
         window.location.href = '/login';
       }
     }
