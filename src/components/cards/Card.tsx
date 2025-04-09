@@ -65,7 +65,7 @@ export default function Card({
   return (
     <div
       className={cn(
-        "relative w-[350px] h-[500px] overflow-hidden bg-white rounded-2xl shadow-lg border border-gray-200/80",
+        "relative w-[350px] h-[500px] overflow-visible bg-white rounded-2xl shadow-lg border border-gray-200/80",
         className
       )}
     >
@@ -117,8 +117,8 @@ export default function Card({
         {children}
       </div>
       
-      {/* Tinder-style Action Buttons that hang off the edge */}
-      <div className="absolute -bottom-5 left-0 right-0 flex justify-between px-10">
+      {/* Tinder-style Action Buttons - positioned for visibility */}
+      <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-8 z-10 mb-2">
         <motion.button
           onClick={onDislike}
           className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500 text-white shadow-[0_3px_10px_rgba(0,0,0,0.2)] border-2 border-white"
