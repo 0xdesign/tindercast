@@ -113,12 +113,12 @@ export default function Card({
       </div>
       
       {/* Bio Content */}
-      <div className="p-5">
+      <div className="p-5 pb-10">
         {children}
       </div>
       
-      {/* Tinder-style Action Buttons - positioned for visibility */}
-      <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-8 z-10 mb-2">
+      {/* Tinder-style Action Buttons - positioned to hang off the bottom */}
+      <div className="absolute -bottom-8 left-0 right-0 flex justify-center gap-10 z-10">
         <motion.button
           onClick={onDislike}
           className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500 text-white shadow-[0_3px_10px_rgba(0,0,0,0.2)] border-2 border-white"
