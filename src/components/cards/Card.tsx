@@ -15,12 +15,12 @@ const TokenBadge = ({ label, className }: TokenBadgeProps) => {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       className={cn(
-        "rounded-full px-3 py-1 text-sm font-medium flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-gray-200 shadow-sm",
+        "rounded-full px-4 py-1.5 text-sm font-semibold flex items-center gap-2 bg-gray-100/90 backdrop-blur-sm border border-white/20 shadow-sm",
         className
       )}
     >
       <span className="h-3 w-3 rounded-full bg-blue-500 flex-shrink-0"></span>
-      <span>{label}</span>
+      <span className="text-gray-800">{label}</span>
     </motion.div>
   );
 };
@@ -65,12 +65,12 @@ export default function Card({
   return (
     <div
       className={cn(
-        "w-[350px] h-[500px] overflow-hidden bg-white rounded-2xl shadow-lg border border-gray-200/80",
+        "relative w-[350px] h-[500px] overflow-hidden bg-white rounded-2xl shadow-lg border border-gray-200/80",
         className
       )}
     >
       {/* Profile Image with Gradient Overlay */}
-      <div className="relative h-[70%] w-full bg-gray-200">
+      <div className="relative h-[75%] w-full bg-gray-200">
         {image && !imageError ? (
           <>
             <img
@@ -80,30 +80,30 @@ export default function Card({
               onError={() => setImageError(true)}
             />
             {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80" />
           </>
         ) : (
           <div className="flex h-full w-full items-center justify-center">
             <span className="text-5xl font-bold text-gray-400">{name.charAt(0).toUpperCase()}</span>
             {/* Gradient overlay for placeholder */}
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80" />
           </div>
         )}
         
         {/* Profile info overlay on image */}
-        <div className="absolute bottom-0 left-0 w-full p-4 text-white">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold">{name}</h2>
+        <div className="absolute bottom-0 left-0 w-full p-5 text-white">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-3xl font-bold drop-shadow-sm">{name}</h2>
             {overlapPercentage !== undefined && (
-              <span className="rounded-full bg-white/20 backdrop-blur-sm px-3 py-1 text-sm font-medium text-white">
+              <span className="rounded-full bg-white/30 backdrop-blur-sm px-3 py-1.5 text-sm font-semibold text-white drop-shadow-sm border border-white/20">
                 {overlapPercentage}% Overlap
               </span>
             )}
           </div>
           
-          {/* Token Badges */}
+          {/* Token Badges - Moved higher up to avoid gradient */}
           {commonTokens && commonTokens.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap gap-2.5">
               {commonTokens.map((token, index) => (
                 <TokenBadge key={index} label={token} />
               ))}
@@ -113,26 +113,26 @@ export default function Card({
       </div>
       
       {/* Bio Content */}
-      <div className="p-4">
+      <div className="p-5">
         {children}
       </div>
       
-      {/* Tinder-style Action Buttons */}
-      <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-6">
+      {/* Tinder-style Action Buttons that hang off the edge */}
+      <div className="absolute -bottom-5 left-0 right-0 flex justify-between px-10">
         <motion.button
           onClick={onDislike}
-          className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500 text-white shadow-md"
+          className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500 text-white shadow-[0_3px_10px_rgba(0,0,0,0.2)] border-2 border-white"
           whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
+          whileTap={{ scale: 0.95, y: 5 }}
         >
           <XIcon />
         </motion.button>
         
         <motion.button
           onClick={onLike}
-          className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500 text-white shadow-md"
+          className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500 text-white shadow-[0_3px_10px_rgba(0,0,0,0.2)] border-2 border-white"
           whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
+          whileTap={{ scale: 0.95, y: 5 }}
         >
           <HeartIcon />
         </motion.button>
