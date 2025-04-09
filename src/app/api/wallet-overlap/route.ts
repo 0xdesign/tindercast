@@ -11,28 +11,28 @@ import {
 /**
  * API handler for wallet overlap calculation
  * POST /api/wallet-overlap
- * Body: { userFid: number, profileFid: number }
+ * Body: { userFid: number, targetFid: number }
  */
 export async function POST(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
-    const { userFid, profileFid } = body;
+    const { userFid, targetFid } = body;
     
     // Validate FIDs
-    if (!userFid || !profileFid) {
+    if (!userFid || !targetFid) {
       return NextResponse.json(
         { error: 'Missing FID parameters' },
         { status: 400 }
       );
     }
     
-    console.log(`Calculating wallet overlap between FIDs: ${userFid} and ${profileFid}`);
+    console.log(`Calculating wallet overlap between FIDs: ${userFid} and ${targetFid}`);
     
     // Fetch profiles to get wallet addresses
     const [userProfile, targetProfile] = await Promise.all([
       fetchFarcasterProfile(userFid),
-      fetchFarcasterProfile(profileFid)
+      fetchFarcasterProfile(targetFid)
     ]);
     
     // Get all wallet addresses
