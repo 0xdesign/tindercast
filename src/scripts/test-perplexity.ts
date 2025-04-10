@@ -5,7 +5,7 @@
  */
 
 require('dotenv').config();
-const perplexity = require('../utils/perplexity');
+const perplexityService = require('../utils/perplexity');
 
 // Test usernames
 const testUsernames = ['vitalik', 'elonmusk', 'satoshi'];
@@ -28,7 +28,7 @@ async function runTests() {
   for (const username of testUsernames) {
     try {
       console.log(`Username: ${username}`);
-      const summary = await perplexity.generateUserSummary(username);
+      const summary = await perplexityService.generateUserSummary(username);
       console.log(`Summary: ${summary}`);
       console.log(`Length: ${summary.length} characters\n`);
     } catch (error) {
@@ -44,7 +44,7 @@ async function runTests() {
     try {
       const holdings = testHoldings[i];
       console.log(`Holdings: ${holdings.join(', ')}`);
-      const archetype = await perplexity.generateTradingArchetype(holdings);
+      const archetype = await perplexityService.generateTradingArchetype(holdings);
       console.log(`Archetype: ${archetype}\n`);
     } catch (error) {
       console.error(`❌ Error generating archetype for ${testHoldings[i].join(', ')}:`, error);

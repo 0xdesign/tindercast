@@ -5,7 +5,7 @@
  */
 
 require('dotenv').config();
-const perplexity = require('../utils/perplexity');
+const perplexityAPI = require('../utils/perplexity');
 
 // Test data
 const testCases = [
@@ -25,8 +25,8 @@ async function runTests() {
       
       // Use Promise.all to run both API calls in parallel
       const [summary, archetype] = await Promise.all([
-        perplexity.generateUserSummary(testCase.username),
-        perplexity.generateTradingArchetype(testCase.topHoldings)
+        perplexityAPI.generateUserSummary(testCase.username),
+        perplexityAPI.generateTradingArchetype(testCase.topHoldings)
       ]);
       
       console.log('📝 Results:');
