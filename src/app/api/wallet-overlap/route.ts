@@ -29,6 +29,16 @@ export async function POST(request: NextRequest) {
     
     console.log(`Calculating wallet overlap between FIDs: ${userFid} and ${targetFid}`);
     
+    // For testing, return mock data based on the target FID
+    const useMockData = request.nextUrl.searchParams.get('useMockData') === 'true'; // Only use mock data when explicitly requested
+    
+    if (useMockData) {
+      console.log(`[API] Using mock wallet overlap data for FIDs: ${userFid} and ${targetFid}`);
+      
+      return getMockWalletOverlap(userFid, targetFid);
+    }
+
+    // Real implementation for production
     // Fetch profiles to get wallet addresses
     const [userProfile, targetProfile] = await Promise.all([
       fetchFarcasterProfile(userFid),
@@ -106,4 +116,32 @@ export async function POST(request: NextRequest) {
       { status: formattedError.status }
     );
   }
+}
+
+// Helper function to generate consistent mock data
+function getMockWalletOverlap(userFid: number, targetFid: number) {
+  // Use FID to generate a deterministic overlap percentage
+  const fidNum = parseInt(targetFid.toString().slice(-3));
+  const overlapPercentage = (fidNum % 100);
+  
+  // Create mock common assets
+  const commonTokens = [
+    { symbol: 'ETH', name: 'Ethereum', imgUrl: 'https://cryptologos.cc/logos/ethereum-eth-logo.png', network: 'ethereum' },
+    { symbol: 'BTC', name: 'Bitcoin', imgUrl: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png', network: 'bitcoin' },
+    { symbol: 'SOL', name: 'Solana', imgUrl: 'https://cryptologos.cc/logos/solana-sol-logo.png', network: 'solana' },
+    { symbol: 'USDC', name: 'USD Coin', imgUrl: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png', network: 'ethereum' },
+    { symbol: 'ARB', name: 'Arbitrum', imgUrl: 'https://cryptologos.cc/logos/arbitrum-arb-logo.png', network: 'arbitrum' },
+    { symbol: 'MATIC', name: 'Polygon', imgUrl: 'https://cryptologos.cc/logos/polygon-matic-logo.png', network: 'polygon' }
+  ];
+  
+  // Choose a subset of tokens based on the FID
+  const numCommonAssets = Math.max(1, fidNum % 5);
+  const selectedTokens = commonTokens.slice(0, numCommonAssets);
+  
+  // Return mock response
+  return NextResponse.json({
+    topCommonAssets: selectedTokens,
+    overlapPercentage: overlapPercentage,
+    totalCommonAssets: numCommonAssets
+  });
 } 
