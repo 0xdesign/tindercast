@@ -12,6 +12,9 @@ interface Profile {
   imageUrl: string;
   custodyAddress?: string;
   connectedAddresses?: string[];
+  // Added fields for enhanced profile data
+  enhancedSummary?: string;
+  tradingArchetype?: string;
 }
 
 interface WalletOverlapData {
@@ -32,11 +35,12 @@ export default function CardStack({ profiles }: CardStackProps) {
   const [direction, setDirection] = useState<'left' | 'right' | null>(null);
   const [exiting, setExiting] = useState(false);
   const [walletData, setWalletData] = useState<Record<number, WalletOverlapData>>({});
+  const [enhancedProfiles, setEnhancedProfiles] = useState<Profile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch wallet data for each profile
+  // Fetch wallet data and enhanced profile data for each profile
   useEffect(() => {
-    const fetchWalletData = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
       
       // Get the current user FID
@@ -45,11 +49,15 @@ export default function CardStack({ profiles }: CardStackProps) {
 
       const { fid } = JSON.parse(storedUser);
       const walletResults: Record<number, WalletOverlapData> = {};
+      const enhancedProfilesData = [...profiles];
       
-      // Fetch wallet data for each profile
-      for (const profile of profiles) {
+      // Fetch data for each profile
+      for (let i = 0; i < profiles.length; i++) {
+        const profile = profiles[i];
+        
         try {
-          const response = await fetch('/api/wallet-overlap', {
+          // Fetch wallet overlap data
+          const walletResponse = await fetch('/api/wallet-overlap', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -60,20 +68,46 @@ export default function CardStack({ profiles }: CardStackProps) {
             }),
           });
           
-          if (response.ok) {
-            const data = await response.json();
-            walletResults[profile.fid] = data;
+          if (walletResponse.ok) {
+            const walletData = await walletResponse.json();
+            walletResults[profile.fid] = walletData;
+            
+            // Now fetch enhanced profile data with the top token holdings
+            const topHoldings = walletData.topCommonAssets.map(asset => asset.symbol);
+            
+            const enhancementResponse = await fetch('/api/profile-enrichment', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                username: profile.username,
+                topHoldings
+              }),
+            });
+            
+            if (enhancementResponse.ok) {
+              const enhancementData = await enhancementResponse.json();
+              
+              // Update the profile with enhanced data
+              enhancedProfilesData[i] = {
+                ...profile,
+                enhancedSummary: enhancementData.summary,
+                tradingArchetype: enhancementData.archetype
+              };
+            }
           }
         } catch (error) {
-          console.error(`Error fetching wallet data for ${profile.username}:`, error);
+          console.error(`Error fetching data for ${profile.username}:`, error);
         }
       }
       
       setWalletData(walletResults);
+      setEnhancedProfiles(enhancedProfilesData);
       setIsLoading(false);
     };
     
-    fetchWalletData();
+    fetchData();
   }, [profiles]);
 
   const handleSwipe = (dir: 'left' | 'right') => {
@@ -107,7 +141,7 @@ export default function CardStack({ profiles }: CardStackProps) {
     );
   }
 
-  const currentProfile = profiles[currentIndex];
+  const currentProfile = enhancedProfiles[currentIndex] || profiles[currentIndex];
   const overlap = walletData[currentProfile.fid];
   const commonTokens = overlap?.topCommonAssets.map((asset) => asset.symbol) || [];
 
@@ -135,10 +169,13 @@ export default function CardStack({ profiles }: CardStackProps) {
               name={currentProfile.displayName || currentProfile.username}
               overlapPercentage={overlap?.overlapPercentage}
               commonTokens={commonTokens}
+              tradingArchetype={currentProfile.tradingArchetype}
               onLike={() => handleSwipe('right')}
               onDislike={() => handleSwipe('left')}
             >
-              <p className="text-sm text-gray-600">{currentProfile.description}</p>
+              <p className="text-sm text-gray-600">
+                {currentProfile.enhancedSummary || currentProfile.description || "No description available"}
+              </p>
             </Card>
           </motion.div>
         </AnimatePresence>

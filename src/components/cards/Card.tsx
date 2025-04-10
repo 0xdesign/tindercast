@@ -45,6 +45,7 @@ interface CardProps {
   name: string;
   overlapPercentage?: number;
   commonTokens?: string[];
+  tradingArchetype?: string;
   onLike?: () => void;
   onDislike?: () => void;
   children?: React.ReactNode;
@@ -56,6 +57,7 @@ export default function Card({
   name, 
   overlapPercentage, 
   commonTokens = [], 
+  tradingArchetype,
   onLike, 
   onDislike, 
   children 
@@ -100,6 +102,15 @@ export default function Card({
               </span>
             )}
           </div>
+          
+          {/* Trading Archetype Badge - if available */}
+          {tradingArchetype && (
+            <div className="mb-3">
+              <span className="rounded-full bg-white/20 backdrop-blur-sm px-3 py-1.5 text-sm font-semibold text-white drop-shadow-sm border border-white/20">
+                {tradingArchetype}
+              </span>
+            </div>
+          )}
           
           {/* Token Badges - Moved higher up to avoid gradient */}
           {commonTokens && commonTokens.length > 0 && (
