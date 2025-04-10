@@ -36,13 +36,9 @@ async function calculatePortfolioOverlap(userFid: number, targetFid: number) {
     cacheKey,
     async () => {
       try {
-        // Fetch wallet overlap from existing API
-        // Server-side fetch needs absolute URL
-        const baseUrl = process.env.VERCEL_URL 
-          ? `https://${process.env.VERCEL_URL}` 
-          : 'http://localhost:3010'; // Use the latest detected port
-        
-        const response = await fetch(`${baseUrl}/api/wallet-overlap`, {
+        // Use a relative URL for same-origin requests instead of constructing absolute URLs
+        // This ensures it works in both local development and production environments
+        const response = await fetch(`/api/wallet-overlap`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
